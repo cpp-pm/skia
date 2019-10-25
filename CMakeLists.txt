@@ -23,15 +23,47 @@
 # THE SOFTWARE.
 
 cmake_minimum_required (VERSION 3.1)
-project(skia)
-set (CMAKE_CXX_STANDARD_REQUIRED 17)
+
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/HunterGate.cmake)
+
+HunterGate(
+    URL "https://github.com/cpp-pm/hunter/archive/v0.23.221.tar.gz"
+    SHA1 "8baada344e09c6a882934b9378bd253f2faa0ce3"
+)
+
+project(skia LANGUAGES C CXX VERSION "75")
+#set (CMAKE_CXX_STANDARD_REQUIRED 17)
 
 if(UNIX AND NOT APPLE)
-  find_package(Freetype)
+  hunter_add_package(freetype)
+  find_package(freetype CONFIG REQUIRED)
 endif()
 
-if(EXPAT_FOUND AND ZLIB_FOUND)
-  set(SKIA_ENABLE_PDF TRUE)
+hunter_add_package(PNG)
+find_package(PNG CONFIG REQUIRED)
+add_compile_definitions(SK_HAS_PNG_LIBRARY)
+
+hunter_add_package(Expat)
+find_package(EXPAT CONFIG REQUIRED)
+add_compile_definitions(SK_XML)
+
+hunter_add_package(ZLIB)
+find_package(ZLIB CONFIG REQUIRED)
+
+hunter_add_package(giflib)
+find_package(giflib CONFIG REQUIRED)
+
+hunter_add_package(libjpeg-turbo)
+find_package(libjpeg-turbo CONFIG REQUIRED)
+
+hunter_add_package(harfbuzz)
+find_package(harfbuzz CONFIG REQUIRED)
+add_compile_definitions(SK_SHAPER_HARFBUZZ_AVAILABLE)
+
+add_compile_definitions(SK_SUPPORT_PDF)
+
+if(MSVC)
+  add_compile_options(/MP)
 endif()
 
 # Because wow Skia, just wow.
@@ -99,6 +131,10 @@ elseif(MSVC)
 endif()
 
 set(skia_sources
+    modules/skshaper/src/SkShaper.cpp
+    modules/skshaper/src/SkShaper_harfbuzz.cpp
+    modules/skshaper/src/SkShaper_primitive.cpp
+
   # src/android/SkAndroidFrameworkUtils.cpp
   # src/android/SkAnimatedImage.cpp
   # src/android/SkBitmapRegionCodec.cpp
@@ -108,10 +144,10 @@ set(skia_sources
   # src/atlastext/SkAtlasTextTarget.cpp
   # src/atlastext/SkInternalAtlasTextContext.cpp
 
-  # src/c/sk_effects.cpp
-  # src/c/sk_imageinfo.cpp
-  # src/c/sk_paint.cpp
-  # src/c/sk_surface.cpp
+    src/c/sk_effects.cpp
+    src/c/sk_imageinfo.cpp
+    src/c/sk_paint.cpp
+    src/c/sk_surface.cpp
 
   # src/codec/SkAndroidCodec.cpp
   # src/codec/SkAndroidCodecAdapter
@@ -127,7 +163,7 @@ set(skia_sources
     src/codec/SkGifCodec.cpp
   # src/codec/SkHeifCodec.cpp # does not define any new symbols
     src/codec/SkIcoCodec.cpp
-    src/codec/SkJpegCodec.cpp
+    ##src/codec/SkJpegCodec.cpp
     src/codec/SkJpegDecoderMgr.cpp
     src/codec/SkJpegUtility.cpp
     src/codec/SkMasks.cpp
@@ -959,25 +995,26 @@ set(skia_sources
     )
 
 add_definitions(-DSK_HAS_PNG_LIBRARY)
-if(LUA_FOUND)
+hunter_add_package(Lua)
+find_package(Lua CONFIG REQUIRED)
+if(TARGET Lua::lua_lib)
   list(APPEND skia_sources
               src/utils/SkLua.cpp
               src/utils/SkLuaCanvas.cpp
               )
-  list(APPEND OTHER_LIBRARIES ${LUA_LIBRARIES})
+  list(APPEND OTHER_LIBRARIES Lua::lua_lib)
 endif()
-if(WEBP_FOUND)
+hunter_add_package(WebP)
+find_package(WebP CONFIG REQUIRED)
+if(TARGET WebP::webp)
   list(APPEND skia_sources
-              src/codec/SkWebpAdapterCodec.cpp
               src/codec/SkWebpCodec.cpp
-              src/images/SkWEBPImageEncoder.cpp
               )
-  add_definitions(-DSK_HAS_WEBP_LIBRARY)
-  list(APPEND OTHER_LIBRARIES ${WEBP_LIBRARIES})
+  add_compile_definitions(SK_HAS_WEBP_LIBRARY)
+  list(APPEND OTHER_LIBRARIES WebP::webp)
 endif()
 if(VULKAN_FOUND)
     list(APPEND skia_sources
-                src/gpu/vk/GrVkBackendContext.cpp
                 src/gpu/vk/GrVkBuffer.cpp
                 src/gpu/vk/GrVkCaps.cpp
                 src/gpu/vk/GrVkCommandBuffer.cpp
@@ -1020,7 +1057,7 @@ endif()
 # OS specific files
 if(WIN32)
   list(APPEND skia_sources
-            # src/gpu/gl/win/GrGLMakeNativeInterface_win.cpp
+              #src/gpu/gl/win/GrGLMakeNativeInterface_win.cpp
               src/ports/SkDebug_win.cpp
               src/ports/SkFontHost_win.cpp
               src/ports/SkFontMgr_win_dw.cpp
@@ -1039,6 +1076,8 @@ if(WIN32)
               src/utils/win/SkHRESULT.cpp
               src/utils/win/SkIStream.cpp
               src/utils/win/SkWGL_win.cpp
+              src/xps/SkXPSDevice.cpp
+              src/xps/SkXPSDocument.cpp
               )
 endif()
 if(UNIX AND NOT MINGW)
@@ -1132,7 +1171,7 @@ endif()
 target_compile_definitions(skia PRIVATE SKIA_IMPLEMENTATION=1)
 target_compile_definitions(skia PUBLIC $<$<CONFIG:Debug>:SK_DEBUG>)
 target_link_libraries(skia PUBLIC ${OTHER_LIBRARIES}
-                                  png expat zlib gif jpeg-turbo
+                                  PNG::png EXPAT::expat ZLIB::zlib giflib::giflib libjpeg-turbo::jpeg-static harfbuzz::harfbuzz
                                   $<$<NOT:$<PLATFORM_ID:Windows>>:-ldl>)
 
 if(WIN32)
@@ -1171,24 +1210,49 @@ target_include_directories(skia SYSTEM
                                src/xml
                                third_party/gif
                                third_party/skcms
+                          )
+target_include_directories(skia
                              PUBLIC
-                               include/atlastext
-                               include/codec
-                               include/config
-                               include/core
-                               include/docs
-                               include/effects
-                               include/encode
-                               include/gpu
-                               include/gpu/gl
-                               include/gpu/mock
-                               include/gpu/mtl
-                               include/gpu/vk
-                               include/pathops
-                               include/ports
-                               include/svg
-                               include/utils
-                               include/utils/mac
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/mylib>
+                               $<INSTALL_INTERFACE:skia/mylib>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/atlastext>
+                               $<INSTALL_INTERFACE:skia/atlastext>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/c>
+                               $<INSTALL_INTERFACE:skia/c>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/codec>
+                               $<INSTALL_INTERFACE:skia/codec>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/config>
+                               $<INSTALL_INTERFACE:skia/config>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/core>
+                               $<INSTALL_INTERFACE:skia/core>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/docs>
+                               $<INSTALL_INTERFACE:skia/docs>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/effects>
+                               $<INSTALL_INTERFACE:skia/effects>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/encode>
+                               $<INSTALL_INTERFACE:skia/encode>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/gpu>
+                               $<INSTALL_INTERFACE:skia/gpu>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/gpu/gl>
+                               $<INSTALL_INTERFACE:skia/gpu/gl>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/gpu/mock>
+                               $<INSTALL_INTERFACE:skia/gpu/mock>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/gpu/mtl>
+                               $<INSTALL_INTERFACE:skia/gpu/mtl>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/gpu/vk>
+                               $<INSTALL_INTERFACE:skia/gpu/vk>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/pathops>
+                               $<INSTALL_INTERFACE:skia/pathops>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/ports>
+                               $<INSTALL_INTERFACE:skia/ports>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/svg>
+                               $<INSTALL_INTERFACE:skia/svg>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/utils>
+                               $<INSTALL_INTERFACE:skia/utils>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/utils/mac>
+                               $<INSTALL_INTERFACE:skia/utils/mac>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/skshaper/include>
+                               $<INSTALL_INTERFACE:skia/modules/skshaper>
                                )
 
 ## tests
@@ -1214,3 +1278,50 @@ target_include_directories(skia SYSTEM
 #target_include_directories( AAClipTest PUBLIC src/core tools/gpu include/private )
 #skia_test( AnnotationTest )
 #target_include_directories( AnnotationTest PUBLIC tools/gpu include/private )
+
+# Introduce variables:
+# * CMAKE_INSTALL_LIBDIR
+# * CMAKE_INSTALL_BINDIR
+# * CMAKE_INSTALL_INCLUDEDIR
+include(GNUInstallDirs)
+
+set(GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(VERSION_CONFIG "${GENERATED_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
+set(PROJECT_CONFIG "${GENERATED_DIR}/${PROJECT_NAME}Config.cmake")
+
+set(CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+
+set(TARGETS_EXPORT_NAME "${PROJECT_NAME}Targets")
+set(NAMESPACE "${PROJECT_NAME}::")
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${VERSION_CONFIG}" COMPATIBILITY ExactVersion
+)
+
+configure_package_config_file(
+    "cmake/Config.cmake.in"
+    "${PROJECT_CONFIG}"
+    INSTALL_DESTINATION "${CONFIG_INSTALL_DIR}"
+)
+
+install(
+    TARGETS skia
+    EXPORT "${TARGETS_EXPORT_NAME}"
+    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+)
+
+install(
+    FILES "${PROJECT_CONFIG}" "${VERSION_CONFIG}"
+    DESTINATION "${CONFIG_INSTALL_DIR}"
+)
+
+install(
+    EXPORT "${TARGETS_EXPORT_NAME}"
+    NAMESPACE "${NAMESPACE}"
+    DESTINATION "${CONFIG_INSTALL_DIR}"
+)
+
