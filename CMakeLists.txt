@@ -27,8 +27,9 @@ cmake_minimum_required (VERSION 3.1)
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/HunterGate.cmake)
 
 HunterGate(
-    URL "https://github.com/cpp-pm/hunter/archive/v0.23.221.tar.gz"
-    SHA1 "8baada344e09c6a882934b9378bd253f2faa0ce3"
+    URL "https://github.com/cpp-pm/hunter/archive/v0.23.228.tar.gz"
+    SHA1 "0546cabd20ed784a2245083eb59e9185bf1d63a9"
+    LOCAL
 )
 
 project(skia LANGUAGES C CXX VERSION "75")
@@ -53,8 +54,13 @@ find_package(ZLIB CONFIG REQUIRED)
 hunter_add_package(giflib)
 find_package(giflib CONFIG REQUIRED)
 
-hunter_add_package(libjpeg-turbo)
-find_package(libjpeg-turbo CONFIG REQUIRED)
+hunter_add_package(Jpeg)
+find_package(Jpeg CONFIG REQUIRED)
+
+string(FIND "${HUNTER_Jpeg_VERSION}" "turbo" HUNTER_Jpeg_IS_TURBO)
+if(HUNTER_Jpeg_IS_TURBO EQUAL -1)
+  message(FATAL_ERROR "Skia requires libjpeg-turbo as Jpeg! Specify a turbo- version of Jpeg in your Hunter config.")
+endif()
 
 hunter_add_package(harfbuzz)
 find_package(harfbuzz CONFIG REQUIRED)
@@ -65,6 +71,8 @@ add_compile_definitions(SK_SUPPORT_PDF)
 if(MSVC)
   add_compile_options(/MP)
 endif()
+
+option(SKIA_BUILD_MODULE_SKSHAPER "Build SkShaper module." ON)
 
 # Because wow Skia, just wow.
 if(CMAKE_COMPILER_IS_GNUCXX OR ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
@@ -131,10 +139,6 @@ elseif(MSVC)
 endif()
 
 set(skia_sources
-    modules/skshaper/src/SkShaper.cpp
-    modules/skshaper/src/SkShaper_harfbuzz.cpp
-    modules/skshaper/src/SkShaper_primitive.cpp
-
   # src/android/SkAndroidFrameworkUtils.cpp
   # src/android/SkAnimatedImage.cpp
   # src/android/SkBitmapRegionCodec.cpp
@@ -163,7 +167,7 @@ set(skia_sources
     src/codec/SkGifCodec.cpp
   # src/codec/SkHeifCodec.cpp # does not define any new symbols
     src/codec/SkIcoCodec.cpp
-    ##src/codec/SkJpegCodec.cpp
+    src/codec/SkJpegCodec.cpp
     src/codec/SkJpegDecoderMgr.cpp
     src/codec/SkJpegUtility.cpp
     src/codec/SkMasks.cpp
@@ -509,7 +513,7 @@ set(skia_sources
     src/gpu/gl/GrGLGpuCommandBuffer.cpp
     src/gpu/gl/GrGLGpuProgramCache.cpp
     src/gpu/gl/GrGLInterfaceAutogen.cpp
-    src/gpu/gl/GrGLMakeNativeInterface_none.cpp
+    ##src/gpu/gl/GrGLMakeNativeInterface_none.cpp
     src/gpu/gl/GrGLPath.cpp
     src/gpu/gl/GrGLPathRendering.cpp
     src/gpu/gl/GrGLProgram.cpp
@@ -1057,7 +1061,7 @@ endif()
 # OS specific files
 if(WIN32)
   list(APPEND skia_sources
-              #src/gpu/gl/win/GrGLMakeNativeInterface_win.cpp
+              src/gpu/gl/win/GrGLMakeNativeInterface_win.cpp
               src/ports/SkDebug_win.cpp
               src/ports/SkFontHost_win.cpp
               src/ports/SkFontMgr_win_dw.cpp
@@ -1090,7 +1094,7 @@ if(UNIX AND NOT MINGW)
              )
   if(APPLE)
     list(APPEND skia_sources
-                #src/gpu/gl/mac/GrGLMakeNativeInterface_mac.cpp
+                src/gpu/gl/mac/GrGLMakeNativeInterface_mac.cpp
                 src/ports/SkFontHost_mac.cpp
                 src/ports/SkImageEncoder_CG.cpp
                 src/ports/SkImageGeneratorCG.cpp
@@ -1098,14 +1102,14 @@ if(UNIX AND NOT MINGW)
                )
     if(ARM)
       list(APPEND skia_sources
-                  #src/gpu/gl/iOS/GrGLMakeNativeInterface_iOS.cpp
+                  src/gpu/gl/iOS/GrGLMakeNativeInterface_iOS.cpp
                   )
     endif()
   elseif(ANDROID)
     list(APPEND skia_sources
                 src/codec/SkAndroidCodec.cpp
                 src/codec/SkSampledCodec.cpp
-                #src/gpu/gl/android/GrGLMakeNativeInterface_android.cpp
+                src/gpu/gl/android/GrGLMakeNativeInterface_android.cpp
                 src/ports/SkDebug_android.cpp
                 src/ports/SkFontHost_android.cpp
                 src/ports/SkFontMgr_android.cpp
@@ -1114,6 +1118,9 @@ if(UNIX AND NOT MINGW)
                 )
   else() # currently assume linux
     list(APPEND skia_sources
+                # src/gpu/gl/egl/GrGLMakeNativeInterface_egl.cpp
+                # src/gpu/gl/glfw/GrGLMakeNativeInterface_glfw.cpp
+                # src/gpu/gl/glx/GrGLMakeNativeInterface_glx.cpp
                 src/ports/SkFontConfigInterface_direct_factory.cpp
                 src/ports/SkFontConfigInterface_direct.cpp
                 src/ports/SkFontConfigInterface.cpp
@@ -1124,6 +1131,7 @@ if(UNIX AND NOT MINGW)
                 src/ports/SkFontMgr_FontConfigInterface_factory.cpp
                 src/ports/SkFontMgr_FontConfigInterface.cpp
                )
+
   endif()
 endif()
 
@@ -1158,6 +1166,18 @@ endif()
 file(GLOB_RECURSE skia_headers
                   src/*.h
                   include/*.h)
+
+if(SKIA_BUILD_MODULE_SKSHAPER)
+  list(APPEND skia_sources
+      modules/skshaper/src/SkShaper.cpp
+      modules/skshaper/src/SkShaper_harfbuzz.cpp
+      modules/skshaper/src/SkShaper_primitive.cpp
+  )
+  list(APPEND skia_headers
+      modules/skshaper/include/SkShaper.h
+  )
+endif()
+
 if(SKIA_SHARED)
   add_library(skia SHARED
                    ${skia_sources} ${skia_headers}
@@ -1168,10 +1188,12 @@ elseif(SKIA_STATIC)
                    ${skia_sources} ${skia_headers}
                    )
 endif()
+source_group(TREE ${CMAKE_CURRENT_LIST_DIR}
+             FILES ${skia_sources} ${skia_headers})
 target_compile_definitions(skia PRIVATE SKIA_IMPLEMENTATION=1)
 target_compile_definitions(skia PUBLIC $<$<CONFIG:Debug>:SK_DEBUG>)
 target_link_libraries(skia PUBLIC ${OTHER_LIBRARIES}
-                                  PNG::png EXPAT::expat ZLIB::zlib giflib::giflib libjpeg-turbo::jpeg-static harfbuzz::harfbuzz
+                                  PNG::png EXPAT::expat ZLIB::zlib giflib::giflib JPEG::jpeg harfbuzz::harfbuzz
                                   $<$<NOT:$<PLATFORM_ID:Windows>>:-ldl>)
 
 if(WIN32)
@@ -1251,9 +1273,14 @@ target_include_directories(skia
                                $<INSTALL_INTERFACE:skia/utils>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/utils/mac>
                                $<INSTALL_INTERFACE:skia/utils/mac>
+                               )
+
+if(SKIA_BUILD_MODULE_SKSHAPER)
+target_include_directories(skia PUBLIC
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/skshaper/include>
                                $<INSTALL_INTERFACE:skia/modules/skshaper>
-                               )
+)
+endif()
 
 ## tests
 #function(skia_test test_name)
