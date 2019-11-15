@@ -56,6 +56,7 @@ find_package(giflib CONFIG REQUIRED)
 
 hunter_add_package(Jpeg)
 find_package(Jpeg CONFIG REQUIRED)
+add_compile_definitions(SK_HAS_JPEG_LIBRARY)
 
 string(FIND "${HUNTER_Jpeg_VERSION}" "turbo" HUNTER_Jpeg_IS_TURBO)
 if(HUNTER_Jpeg_IS_TURBO EQUAL -1)
@@ -68,13 +69,24 @@ add_compile_definitions(SK_SHAPER_HARFBUZZ_AVAILABLE)
 add_compile_definitions(SK_USING_THIRD_PARTY_ICU)
 
 add_compile_definitions(SK_SUPPORT_PDF)
+add_compile_definitions(SK_SUPPORT_GPU_COMPUTE)
 
 if(MSVC)
   add_compile_options(/MP)
 endif()
 
 option(SKIA_BUILD_MODULE_SKSHAPER "Build SkShaper module." ON)
+option(SKIA_ENABLE_ATLAS_TEXT "Enable atlastext support." ON)
+option(SKIA_ENABLE_OPENCL "Enable OpenCL support." OFF)
 option(SKIA_ENABLE_VULKAN "Enable Vulkan support." OFF)
+
+if(SKIA_ENABLE_ATLAS_TEXT)
+  add_compile_definitions(SK_SUPPORT_ATLAS_TEXT)
+endif()
+
+if(SKIA_ENABLE_OPENCL)
+  find_package(OpenCL REQUIRED)
+endif()
 
 if(SKIA_ENABLE_VULKAN)
   hunter_add_package(Vulkan-Headers)
@@ -149,22 +161,22 @@ elseif(MSVC)
 endif()
 
 set(skia_sources
-  # src/android/SkAndroidFrameworkUtils.cpp
-  # src/android/SkAnimatedImage.cpp
-  # src/android/SkBitmapRegionCodec.cpp
-  # src/android/SkBitmapRegionDecoder.cpp
+  # src/android/SkAndroidFrameworkUtils.cpp # Android
+  # src/android/SkAnimatedImage.cpp # Android
+  # src/android/SkBitmapRegionCodec.cpp # Android
+  # src/android/SkBitmapRegionDecoder.cpp # Android
 
-  # src/atlastext/SkAtlasTextContext.cpp
-  # src/atlastext/SkAtlasTextTarget.cpp
-  # src/atlastext/SkInternalAtlasTextContext.cpp
+  # src/atlastext/SkAtlasTextContext.cpp # Atlastext
+  # src/atlastext/SkAtlasTextTarget.cpp # Atlastext
+  # src/atlastext/SkInternalAtlasTextContext.cpp # Atlastext
 
     src/c/sk_effects.cpp
     src/c/sk_imageinfo.cpp
     src/c/sk_paint.cpp
     src/c/sk_surface.cpp
 
-  # src/codec/SkAndroidCodec.cpp
-  # src/codec/SkAndroidCodecAdapter
+  # src/codec/SkAndroidCodec.cpp # Android
+  # src/codec/SkAndroidCodecAdapter.cpp # Android
     src/codec/SkBmpBaseCodec.cpp
     src/codec/SkBmpCodec.cpp
     src/codec/SkBmpMaskCodec.cpp
@@ -184,30 +196,69 @@ set(skia_sources
     src/codec/SkMaskSwizzler.cpp
     src/codec/SkOrientationMarker.cpp
     src/codec/SkPngCodec.cpp
-  # src/codec/SkRawCodec.cpp
+  # src/codec/SkRawCodec.cpp # Requires DNG SDK
     src/codec/SkSampledCodec.cpp
     src/codec/SkSampler.cpp
     src/codec/SkStreamBuffer.cpp
     src/codec/SkSwizzler.cpp
     src/codec/SkWbmpCodec.cpp
-  # src/codec/SkWebpCodec.cpp
-  # src/codec/SkWuffsCodec.cpp
+  # src/codec/SkWebpCodec.cpp # WebP
+  # src/codec/SkWuffsCodec.cpp # Wuffs
 
   # src/compute/color/color.c
-  # src/compute/common/cl/assert_cl.c
-  # src/compute/common/cl/find_cl.c
-  # src/compute/common/cuda/assert_cuda.c
-  # src/compute/common/vk/assert_vk.c
-  # src/compute/common/vk/cache_vk.c
-  # src/compute/common/vk/event_pool.c
-  # src/compute/common/vk/host_alloc.c
+  # src/compute/common/cl/assert_cl.c # OpenCL
+  # src/compute/common/cl/find_cl.c # OpenCL
+  # src/compute/common/cuda/assert_cuda.c # CUDA
+  # src/compute/common/vk/assert_vk.c # Vulkan
+  # src/compute/common/vk/cache_vk.c # Vulkan
+  # src/compute/common/vk/event_pool.c # Vulkan
+  # src/compute/common/vk/host_alloc.c # Vulkan
   # src/compute/common/util.c
-  # src/compute/hs/cl/hs_cl.c
-  # src/compute/sk/SkContext_Compute.cpp
-  # src/compute/sk/SkDevice_Compute.cpp
-  # src/compute/sk/SkImage_Compute.cpp
-  # src/compute/sk/SkSurface_Compute.cpp
-  # src/compute/ts/transform_stack.c
+  # src/compute/hs/cl/hs_cl.c # OpenCL
+  # src/compute/sk/SkContext_Compute.cpp # OpenCL
+  # src/compute/sk/SkDevice_Compute.cpp # OpenCL
+  # src/compute/sk/SkImage_Compute.cpp # OpenCL
+  # src/compute/sk/SkSurface_Compute.cpp # OpenCL
+  # src/compute/skc/allocator_host.c # OpenCL
+  # src/compute/skc/assert_skc.c # OpenCL
+  # src/compute/skc/composition.c # OpenCL
+  # src/compute/skc/context.c # OpenCL
+  # src/compute/skc/extent_ring.c # OpenCL
+  # src/compute/skc/grid.c # OpenCL
+  # src/compute/skc/main.c # OpenCL
+  # src/compute/skc/path_builder.c # OpenCL
+  # src/compute/skc/platforms/cl_12/allocator_device_cl.c # OpenCL
+  # src/compute/skc/platforms/cl_12/composition_cl_12.c # OpenCL
+  # src/compute/skc/platforms/cl_12/cq_pool_cl.c # OpenCL
+  # src/compute/skc/platforms/cl_12/extent_cl_12.c # OpenCL
+  # src/compute/skc/platforms/cl_12/extent_cl_12_unified.c # OpenCL
+  # src/compute/skc/platforms/cl_12/handle_pool_cl_12.c # OpenCL
+  # src/compute/skc/platforms/cl_12/interop/interop_glfw.c # OpenCL
+  # src/compute/skc/platforms/cl_12/kernels/block_pool_init.cl # OpenCL
+  # src/compute/skc/platforms/cl_12/kernels/devices/gen9/device_cl_12.c # OpenCL
+  # src/compute/skc/platforms/cl_12/kernels/fills_expand.cl # OpenCL
+  # src/compute/skc/platforms/cl_12/kernels/paths_copy.cl # OpenCL
+  # src/compute/skc/platforms/cl_12/kernels/paths_reclaim.cl # OpenCL
+  # src/compute/skc/platforms/cl_12/kernels/place.cl # OpenCL
+  # src/compute/skc/platforms/cl_12/kernels/prefix.cl # OpenCL
+  # src/compute/skc/platforms/cl_12/kernels/rasterize.cl # OpenCL
+  # src/compute/skc/platforms/cl_12/kernels/rasters_alloc.cl # OpenCL
+  # src/compute/skc/platforms/cl_12/kernels/rasters_reclaim.cl # OpenCL
+  # src/compute/skc/platforms/cl_12/kernels/render.cl # OpenCL
+  # src/compute/skc/platforms/cl_12/kernels/segment_ttck.cl # OpenCL
+  # src/compute/skc/platforms/cl_12/kernels/segment_ttrk.cl # OpenCL
+  # src/compute/skc/platforms/cl_12/path_builder_cl_12.c # OpenCL
+  # src/compute/skc/platforms/cl_12/raster_builder_cl_12.c # OpenCL
+  # src/compute/skc/platforms/cl_12/runtime_cl_12.c # OpenCL
+  # src/compute/skc/platforms/cl_12/styling_cl_12.c # OpenCL
+  # src/compute/skc/platforms/cl_12/surface_cl_12.c # OpenCL
+  # src/compute/skc/raster_builder.c # OpenCL
+  # src/compute/skc/scheduler.cpp # OpenCL
+  # src/compute/skc/styling.c # OpenCL
+  # src/compute/skc/suballocator.c # OpenCL
+  # src/compute/skc/surface.c # OpenCL
+  # src/compute/skc/weakref.c # OpenCL
+  # src/compute/ts/transform_stack.c # OpenCL
 
     src/core/SkAAClip.cpp
     src/core/SkAlphaRuns.cpp
@@ -252,7 +303,7 @@ set(skia_sources
     src/core/SkCubicMap.cpp
     src/core/SkData.cpp
     src/core/SkDataTable.cpp
-  # src/core/SkDebug.cpp # does not define any new symbols
+  # src/core/SkDebug.cpp # Debug
     src/core/SkDeferredDisplayList.cpp
     src/core/SkDeferredDisplayListRecorder.cpp
     src/core/SkDeque.cpp
@@ -277,7 +328,7 @@ set(skia_sources
     src/core/SkFontMgr.cpp
     src/core/SkFontPriv.cpp
     src/core/SkFontStream.cpp
-  # src/core/SkForceCPlusPlusLinking.cpp
+  # src/core/SkForceCPlusPlusLinking.cpp # does not define any new symbols
     src/core/SkGaussFilter.cpp
     src/core/SkGeometry.cpp
     src/core/SkGlobalInitialization_core.cpp
@@ -563,25 +614,25 @@ set(skia_sources
     src/gpu/gradients/GrGradientBitmapCache.cpp
     src/gpu/gradients/GrGradientShader.cpp
     src/gpu/mock/GrMockGpu.cpp
-  # src/gpu/mtl/GrMtlBuffer.mm
-  # src/gpu/mtl/GrMtlCaps.mm
-  # src/gpu/mtl/GrMtlCopyManager.mm
-  # src/gpu/mtl/GrCopyPipelineState.mm
-  # src/gpu/mtl/GrMtlGpu.mm
-  # src/gpu/mtl/GrMtlGpuCommandBuffer.mm
-  # src/gpu/mtl/GrMtlPipelineState.mm
-  # src/gpu/mtl/GrMtlPipelineDataManager.mm
-  # src/gpu/mtl/GrMtlPipelineStateDataManager.mm
-  # src/gpu/mtl/GrMtlRenderTarget.mm
-  # src/gpu/mtl/GrMtlResourceProvider.mm
-  # src/gpu/mtl/GrMtlSampler.mm
-  # src/gpu/mtl/GrMtlStencilAttachment.mm
-  # src/gpu/mtl/GrMtlTexture.mm
-  # src/gpu/mtl/GrMtlTexturedRenderTarget.mm
-  # src/gpu/mtl/GrMtlTrampoline.mm
-  # src/gpu/mtl/GrMtlUniformHandler.mm
-  # src/gpu/mtl/GrMtlUtil.mm
-  # src/gpu/mtl/GrMtlVaryingHandler.mm
+  # src/gpu/mtl/GrMtlBuffer.mm # Apple
+  # src/gpu/mtl/GrMtlCaps.mm # Apple
+  # src/gpu/mtl/GrMtlCopyManager.mm # Apple
+  # src/gpu/mtl/GrCopyPipelineState.mm # Apple
+  # src/gpu/mtl/GrMtlGpu.mm # Apple
+  # src/gpu/mtl/GrMtlGpuCommandBuffer.mm # Apple
+  # src/gpu/mtl/GrMtlPipelineState.mm # Apple
+  # src/gpu/mtl/GrMtlPipelineDataManager.mm # Apple
+  # src/gpu/mtl/GrMtlPipelineStateDataManager.mm # Apple
+  # src/gpu/mtl/GrMtlRenderTarget.mm # Apple
+  # src/gpu/mtl/GrMtlResourceProvider.mm # Apple
+  # src/gpu/mtl/GrMtlSampler.mm # Apple
+  # src/gpu/mtl/GrMtlStencilAttachment.mm # Apple
+  # src/gpu/mtl/GrMtlTexture.mm # Apple
+  # src/gpu/mtl/GrMtlTexturedRenderTarget.mm # Apple
+  # src/gpu/mtl/GrMtlTrampoline.mm # Apple
+  # src/gpu/mtl/GrMtlUniformHandler.mm # Apple
+  # src/gpu/mtl/GrMtlUtil.mm # Apple
+  # src/gpu/mtl/GrMtlVaryingHandler.mm # Apple
     src/gpu/ops/GrAAConvexPathRenderer.cpp
     src/gpu/ops/GrAAConvexTessellator.cpp
     src/gpu/ops/GrAAHairLinePathRenderer.cpp
@@ -623,50 +674,50 @@ set(skia_sources
     src/gpu/text/GrTextBlobCache.cpp
     src/gpu/text/GrTextBlobVertexRegenerator.cpp
     src/gpu/text/GrTextContext.cpp
-  # src/gpu/vk/GrVkAMDMemoryAllocator.cpp
-  # src/gpu/vk/GrVkBuffer.cpp
-  # src/gpu/vk/GrVkBufferView.cpp
-  # src/gpu/vk/GrVkCaps.cpp
-  # src/gpu/vk/GrVkCommandBuffer.cpp
-  # src/gpu/vk/GrVkCommandPool.cpp
-  # src/gpu/vk/GrVkCopyManager.cpp
-  # src/gpu/vk/GrVkCopyPipeline.cpp
-  # src/gpu/vk/GrVkDescriptorPool.cpp
-  # src/gpu/vk/GrVkDescriptorSet.cpp
-  # src/gpu/vk/GrVkDecriptorSetManager.cpp
-  # src/gpu/vk/GrVkExtensions.cpp
-  # src/gpu/vk/GrVkFrameBuffer.cpp
-  # src/gpu/vk/GrVkGpu.cpp
-  # src/gpu/vk/GrVkGpuCommandBuffer.cpp
-  # src/gpu/vk/GrVkImage.cpp
-  # src/gpu/vk/GrVkImageView.cpp
-  # src/gpu/vk/GrVkIndexBuffer.cpp
-  # src/gpu/vk/GrVkInterface.cpp
-  # src/gpu/vk/GrVkMemory.cpp
-  # src/gpu/vk/GrVkPipeline.cpp
-  # src/gpu/vk/GrVkPipelineLayout.cpp
-  # src/gpu/vk/GrVkPipelineState.cpp
-  # src/gpu/vk/GrVkPipelineStateBuilder.cpp
-  # src/gpu/vk/GrVkPipelineStateCache.cpp
-  # src/gpu/vk/GrVkPipelineStateDataManager.cpp
-  # src/gpu/vk/GrVkRenderPass.cpp
-  # src/gpu/vk/GrVkRenderTarget.cpp
-  # src/gpu/vk/GrVkResourceProvider.cpp
-  # src/gpu/vk/GrVkSampler.cpp
-  # src/gpu/vk/GrVkSamplerYcbcrConversion.cpp
-  # src/gpu/vk/grVkSecondaryCBDrawContext.cpp
-  # src/gpu/vk/GrVkSemaphore.cpp
-  # src/gpu/vk/GrVkStencilAttachment.cpp
-  # src/gpu/vk/GrVkTexture.cpp
-  # src/gpu/vk/GrVkTextureRenderTarget.cpp
-  # src/gpu/vk/GrVkTransferBuffer.cpp
-  # src/gpu/vk/GrVkTypesPriv.cpp
-  # src/gpu/vk/GrVkUniformBuffer.cpp
-  # src/gpu/vk/GrVkUniformHandler.cpp
-  # src/gpu/vk/GrVkUtil.cpp
-  # src/gpu/vk/GrVkVaryingHandler.cpp
-  # src/gpu/vk/GrVkVertexBuffer.cpp
-  # src/gpu/GrAHardwareBufferImageGenerator.cpp # does not define any new symbols
+  # src/gpu/vk/GrVkAMDMemoryAllocator.cpp # Vulkan
+  # src/gpu/vk/GrVkBuffer.cpp # Vulkan
+  # src/gpu/vk/GrVkBufferView.cpp # Vulkan
+  # src/gpu/vk/GrVkCaps.cpp # Vulkan
+  # src/gpu/vk/GrVkCommandBuffer.cpp # Vulkan
+  # src/gpu/vk/GrVkCommandPool.cpp # Vulkan
+  # src/gpu/vk/GrVkCopyManager.cpp # Vulkan
+  # src/gpu/vk/GrVkCopyPipeline.cpp # Vulkan
+  # src/gpu/vk/GrVkDescriptorPool.cpp # Vulkan
+  # src/gpu/vk/GrVkDescriptorSet.cpp # Vulkan
+  # src/gpu/vk/GrVkDecriptorSetManager.cpp # Vulkan
+  # src/gpu/vk/GrVkExtensions.cpp # Vulkan
+  # src/gpu/vk/GrVkFrameBuffer.cpp # Vulkan
+  # src/gpu/vk/GrVkGpu.cpp # Vulkan
+  # src/gpu/vk/GrVkGpuCommandBuffer.cpp # Vulkan
+  # src/gpu/vk/GrVkImage.cpp # Vulkan
+  # src/gpu/vk/GrVkImageView.cpp # Vulkan
+  # src/gpu/vk/GrVkIndexBuffer.cpp # Vulkan
+  # src/gpu/vk/GrVkInterface.cpp # Vulkan
+  # src/gpu/vk/GrVkMemory.cpp # Vulkan
+  # src/gpu/vk/GrVkPipeline.cpp # Vulkan
+  # src/gpu/vk/GrVkPipelineLayout.cpp # Vulkan
+  # src/gpu/vk/GrVkPipelineState.cpp # Vulkan
+  # src/gpu/vk/GrVkPipelineStateBuilder.cpp # Vulkan
+  # src/gpu/vk/GrVkPipelineStateCache.cpp # Vulkan
+  # src/gpu/vk/GrVkPipelineStateDataManager.cpp # Vulkan
+  # src/gpu/vk/GrVkRenderPass.cpp # Vulkan
+  # src/gpu/vk/GrVkRenderTarget.cpp # Vulkan
+  # src/gpu/vk/GrVkResourceProvider.cpp # Vulkan
+  # src/gpu/vk/GrVkSampler.cpp # Vulkan
+  # src/gpu/vk/GrVkSamplerYcbcrConversion.cpp # Vulkan
+  # src/gpu/vk/grVkSecondaryCBDrawContext.cpp # Vulkan
+  # src/gpu/vk/GrVkSemaphore.cpp # Vulkan
+  # src/gpu/vk/GrVkStencilAttachment.cpp # Vulkan
+  # src/gpu/vk/GrVkTexture.cpp # Vulkan
+  # src/gpu/vk/GrVkTextureRenderTarget.cpp # Vulkan
+  # src/gpu/vk/GrVkTransferBuffer.cpp # Vulkan
+  # src/gpu/vk/GrVkTypesPriv.cpp # Vulkan
+  # src/gpu/vk/GrVkUniformBuffer.cpp # Vulkan
+  # src/gpu/vk/GrVkUniformHandler.cpp # Vulkan
+  # src/gpu/vk/GrVkUtil.cpp # Vulkan
+  # src/gpu/vk/GrVkVaryingHandler.cpp # Vulkan
+  # src/gpu/vk/GrVkVertexBuffer.cpp # Vulkan
+  # src/gpu/GrAHardwareBufferImageGenerator.cpp # Vulkan
     src/gpu/GrAHardwareBufferUtils.cpp
     src/gpu/GrAuditTrail.cpp
     src/gpu/GrBackendSurface.cpp
@@ -771,19 +822,19 @@ set(skia_sources
     src/image/SkSurface_Gpu.cpp
 
     src/images/SkImageEncoder.cpp
-  # src/images/SkJpegEncoder.cpp # defines no new symbols
+    src/images/SkJpegEncoder.cpp
     src/images/SkJPEGWriteUtility.cpp
     src/images/SkPngEncoder.cpp
-  # src/images/SkWebpEncoder.cpp
+  # src/images/SkWebpEncoder.cpp # WebP
 
     src/lazy/SkDiscardableMemoryPool.cpp
 
-  # src/opts/SkOpts_avx.cpp
-  # src/opts/SkOpts_crc32.cpp
+  # src/opts/SkOpts_avx.cpp # CPU
+  # src/opts/SkOpts_crc32.cpp # CPU
     src/opts/SkOpts_hsw.cpp
-  # src/opts/SkOpts_sse41.cpp
-  # src/opts/SkOpts_sse42.cpp
-  # src/opts/SkOpts_ssse3.cpp
+  # src/opts/SkOpts_sse41.cpp # CPU
+  # src/opts/SkOpts_sse42.cpp # CPU
+  # src/opts/SkOpts_ssse3.cpp # CPU
 
     src/pathops/SkAddIntersections.cpp
     src/pathops/SkDConicLineIntersection.cpp
@@ -821,7 +872,7 @@ set(skia_sources
     src/pdf/SkClusterator.cpp
     src/pdf/SkDeflate.cpp
   # src/pdf/SkDocument_PDF_None.cpp
-  # src/pdf/SkJpegInfo.cpp # already defined in SkJpegCodec
+    src/pdf/SkJpegInfo.cpp
     src/pdf/SkKeyedImage.cpp
     src/pdf/SkPDFBitmap.cpp
     src/pdf/SkPDFConvertType1FontStream.cpp
@@ -968,8 +1019,8 @@ set(skia_sources
     src/utils/SkInterpolator.cpp
     src/utils/SkJSON.cpp
     src/utils/SkJSONWriter.cpp
-  # src/utils/SkLua.cpp
-  # src/utils/SkLuaCanvas.cpp
+  # src/utils/SkLua.cpp # Lua
+  # src/utils/SkLuaCanvas.cpp # Lua
     src/utils/SkMatrix22.cpp
     src/utils/SkMetaData.cpp
     src/utils/SkMultiPictureDocument.cpp
@@ -985,8 +1036,8 @@ set(skia_sources
     src/utils/SkShadowTessellator.cpp
     src/utils/SkShadowUtils.cpp
     src/utils/SkTextUtils.cpp
-  # src/utils/SkThreadUtils_pthread.cpp
-  # src/utils/SkThreadUtils_win.cpp
+  # src/utils/SkThreadUtils_pthread.cpp # UNIX
+  # src/utils/SkThreadUtils_win.cpp # Windows
     src/utils/SkUTF.cpp
     src/utils/SkWhitelistTypefaces.cpp
 
@@ -994,8 +1045,8 @@ set(skia_sources
     src/xml/SkXMLParser.cpp
     src/xml/SkXMLWriter.cpp
 
-  # xps/SkXPSDevice.cpp
-  # xps/SkXPSDocument.cpp
+  # xps/SkXPSDevice.cpp # Windows
+  # xps/SkXPSDocument.cpp # Windows
 
     third_party/etc1/etc1.cpp
 
@@ -1005,7 +1056,7 @@ set(skia_sources
 
     third_party/skcms/skcms.cc
 
-  # third_party/vulkanmemoryallocator/GrVulkanMemoryAllocator.cpp
+  # third_party/vulkanmemoryallocator/GrVulkanMemoryAllocator.cpp # Vulkan
     )
 
 add_compile_definitions(SK_HAS_PNG_LIBRARY)
@@ -1023,13 +1074,79 @@ find_package(WebP CONFIG REQUIRED)
 if(TARGET WebP::webp)
   list(APPEND skia_sources
               src/codec/SkWebpCodec.cpp
+              src/images/SkWebpEncoder.cpp
               )
   add_compile_definitions(SK_HAS_WEBP_LIBRARY)
   list(APPEND OTHER_LIBRARIES WebP::webp)
 endif()
+if(SKIA_ENABLE_ATLAS_TEXT)
+  list(APPEND skia_sources
+              src/atlastext/SkAtlasTextContext.cpp
+              src/atlastext/SkAtlasTextTarget.cpp
+              src/atlastext/SkInternalAtlasTextContext.cpp)
+endif()
+if(SKIA_ENABLE_OPENCL)
+  list(APPEND skia_sources
+              src/compute/color/color.c
+              src/compute/common/cl/assert_cl.c
+              src/compute/common/cl/find_cl.c
+              # src/compute/common/cuda/assert_cuda.c # CUDA
+              src/compute/common/util.c
+              src/compute/hs/cl/hs_cl.c
+              src/compute/sk/SkContext_Compute.cpp
+              src/compute/sk/SkDevice_Compute.cpp
+              src/compute/sk/SkImage_Compute.cpp
+              src/compute/sk/SkSurface_Compute.cpp
+              src/compute/skc/allocator_host.c
+              src/compute/skc/assert_skc.c
+              src/compute/skc/composition.c
+              src/compute/skc/context.c
+              src/compute/skc/extent_ring.c
+              src/compute/skc/grid.c
+              src/compute/skc/main.c
+              src/compute/skc/path_builder.c
+              src/compute/skc/platforms/cl_12/allocator_device_cl.c
+              src/compute/skc/platforms/cl_12/composition_cl_12.c
+              src/compute/skc/platforms/cl_12/cq_pool_cl.c
+              src/compute/skc/platforms/cl_12/extent_cl_12.c
+              src/compute/skc/platforms/cl_12/extent_cl_12_unified.c
+              src/compute/skc/platforms/cl_12/handle_pool_cl_12.c
+              # src/compute/skc/platforms/cl_12/interop/interop_glfw.c
+              src/compute/skc/platforms/cl_12/kernels/block_pool_init.cl
+              src/compute/skc/platforms/cl_12/kernels/devices/gen9/device_cl_12.c
+              src/compute/skc/platforms/cl_12/kernels/fills_expand.cl
+              src/compute/skc/platforms/cl_12/kernels/paths_copy.cl
+              src/compute/skc/platforms/cl_12/kernels/paths_reclaim.cl
+              src/compute/skc/platforms/cl_12/kernels/place.cl
+              src/compute/skc/platforms/cl_12/kernels/prefix.cl
+              src/compute/skc/platforms/cl_12/kernels/rasterize.cl
+              src/compute/skc/platforms/cl_12/kernels/rasters_alloc.cl
+              src/compute/skc/platforms/cl_12/kernels/rasters_reclaim.cl
+              src/compute/skc/platforms/cl_12/kernels/render.cl
+              src/compute/skc/platforms/cl_12/kernels/segment_ttck.cl
+              src/compute/skc/platforms/cl_12/kernels/segment_ttrk.cl
+              src/compute/skc/platforms/cl_12/path_builder_cl_12.c
+              src/compute/skc/platforms/cl_12/raster_builder_cl_12.c
+              src/compute/skc/platforms/cl_12/runtime_cl_12.c
+              src/compute/skc/platforms/cl_12/styling_cl_12.c
+              src/compute/skc/platforms/cl_12/surface_cl_12.c
+              src/compute/skc/raster_builder.c
+              src/compute/skc/scheduler.cpp
+              src/compute/skc/styling.c
+              src/compute/skc/suballocator.c
+              src/compute/skc/surface.c
+              src/compute/skc/weakref.c
+              src/compute/ts/transform_stack.c
+      )
+      list(APPEND OTHER_LIBRARIES OpenCL::OpenCL)
+endif()
 if(SKIA_ENABLE_VULKAN)
     add_compile_definitions(SK_VULKAN)
     list(APPEND skia_sources
+                src/compute/common/vk/assert_vk.c
+                src/compute/common/vk/cache_vk.c
+                src/compute/common/vk/event_pool.c
+                src/compute/common/vk/host_alloc.c
                 src/gpu/vk/GrVkBuffer.cpp
                 src/gpu/vk/GrVkCaps.cpp
                 src/gpu/vk/GrVkCommandBuffer.cpp
@@ -1106,7 +1223,25 @@ if(UNIX AND NOT MINGW)
              )
   if(APPLE)
     list(APPEND skia_sources
-                src/gpu/gl/mac/GrGLMakeNativeInterface_mac.cpp
+                src/gpu/mtl/GrMtlBuffer.mm
+                src/gpu/mtl/GrMtlCaps.mm
+                src/gpu/mtl/GrMtlCopyManager.mm
+                src/gpu/mtl/GrCopyPipelineState.mm
+                src/gpu/mtl/GrMtlGpu.mm
+                src/gpu/mtl/GrMtlGpuCommandBuffer.mm
+                src/gpu/mtl/GrMtlPipelineState.mm
+                src/gpu/mtl/GrMtlPipelineDataManager.mm
+                src/gpu/mtl/GrMtlPipelineStateDataManager.mm
+                src/gpu/mtl/GrMtlRenderTarget.mm
+                src/gpu/mtl/GrMtlResourceProvider.mm
+                src/gpu/mtl/GrMtlSampler.mm
+                src/gpu/mtl/GrMtlStencilAttachment.mm
+                src/gpu/mtl/GrMtlTexture.mm
+                src/gpu/mtl/GrMtlTexturedRenderTarget.mm
+                src/gpu/mtl/GrMtlTrampoline.mm
+                src/gpu/mtl/GrMtlUniformHandler.mm
+                src/gpu/mtl/GrMtlUtil.mm
+                src/gpu/mtl/GrMtlVaryingHandler.mm
                 src/ports/SkFontHost_mac.cpp
                 src/ports/SkImageEncoder_CG.cpp
                 src/ports/SkImageGeneratorCG.cpp
@@ -1116,11 +1251,20 @@ if(UNIX AND NOT MINGW)
       list(APPEND skia_sources
                   src/gpu/gl/iOS/GrGLMakeNativeInterface_iOS.cpp
                   )
+    else()
+      list(APPEND skia_sources
+                  src/gpu/gl/mac/GrGLMakeNativeInterface_mac.cpp
+                  )
     endif()
   elseif(ANDROID)
     list(APPEND skia_sources
+                src/android/SkAndroidFrameworkUtils.cpp
+                src/android/SkAnimatedImage.cpp
+                src/android/SkBitmapRegionCodec.cpp
+                src/android/SkBitmapRegionDecoder.cpp
                 src/codec/SkAndroidCodec.cpp
-                src/codec/SkSampledCodec.cpp
+                src/codec/SkAndroidCodecAdapter.cpp
+                src/gpu/GrAHardwareBufferImageGenerator.cpp
                 src/gpu/gl/android/GrGLMakeNativeInterface_android.cpp
                 src/ports/SkDebug_android.cpp
                 src/ports/SkFontHost_android.cpp
@@ -1230,7 +1374,6 @@ target_include_directories(skia SYSTEM
                                include/private
                                src/atlastext
                                src/codec
-                               src/compute
                                src/core
                                src/fonts
                                src/gpu
@@ -1252,6 +1395,14 @@ target_include_directories(skia SYSTEM
                                third_party/icu
                                third_party/skcms
                           )
+if(SKIA_ENABLE_OPENCL)
+  target_include_directories(skia SYSTEM
+                               PRIVATE
+                                 src/compute
+                                 src/compute/skc
+                                 src/compute/skc/platforms/cl_12
+                            )
+endif()
 if(SKIA_ENABLE_VULKAN)
   target_include_directories(skia PRIVATE third_party/vulkanmemoryallocator)
 endif()
