@@ -65,6 +65,7 @@ endif()
 hunter_add_package(harfbuzz)
 find_package(harfbuzz CONFIG REQUIRED)
 add_compile_definitions(SK_SHAPER_HARFBUZZ_AVAILABLE)
+add_compile_definitions(SK_USING_THIRD_PARTY_ICU)
 
 add_compile_definitions(SK_SUPPORT_PDF)
 
@@ -73,6 +74,15 @@ if(MSVC)
 endif()
 
 option(SKIA_BUILD_MODULE_SKSHAPER "Build SkShaper module." ON)
+option(SKIA_ENABLE_VULKAN "Enable Vulkan support." OFF)
+
+if(SKIA_ENABLE_VULKAN)
+  hunter_add_package(Vulkan-Headers)
+  find_package(Vulkan-Headers CONFIG REQUIRED)
+
+  hunter_add_package(VulkanMemoryAllocator)
+  find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+endif()
 
 # Because wow Skia, just wow.
 if(CMAKE_COMPILER_IS_GNUCXX OR ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
@@ -998,7 +1008,7 @@ set(skia_sources
   # third_party/vulkanmemoryallocator/GrVulkanMemoryAllocator.cpp
     )
 
-add_definitions(-DSK_HAS_PNG_LIBRARY)
+add_compile_definitions(SK_HAS_PNG_LIBRARY)
 hunter_add_package(Lua)
 find_package(Lua CONFIG REQUIRED)
 if(TARGET Lua::lua_lib)
@@ -1017,7 +1027,8 @@ if(TARGET WebP::webp)
   add_compile_definitions(SK_HAS_WEBP_LIBRARY)
   list(APPEND OTHER_LIBRARIES WebP::webp)
 endif()
-if(VULKAN_FOUND)
+if(SKIA_ENABLE_VULKAN)
+    add_compile_definitions(SK_VULKAN)
     list(APPEND skia_sources
                 src/gpu/vk/GrVkBuffer.cpp
                 src/gpu/vk/GrVkCaps.cpp
@@ -1054,8 +1065,9 @@ if(VULKAN_FOUND)
                 src/gpu/vk/GrVkUtil.cpp
                 src/gpu/vk/GrVkVaryingHandler.cpp
                 src/gpu/vk/GrVkVertexBuffer.cpp
+                third_party/vulkanmemoryallocator/GrVulkanMemoryAllocator.cpp
                 )
-  list(APPEND OTHER_LIBRARIES ${VULKAN_LIBRARIES})
+    list(APPEND OTHER_LIBRARIES VulkanMemoryAllocator::VulkanMemoryAllocator Vulkan::Headers)
 endif()
 
 # OS specific files
@@ -1166,6 +1178,12 @@ endif()
 file(GLOB_RECURSE skia_headers
                   src/*.h
                   include/*.h)
+list(FILTER skia_headers EXCLUDE REGEX "include/third_party/.*$")
+
+if(SKIA_ENABLE_VULKAN)
+  list(APPEND skia_headers
+      third_party/vulkanmemoryallocator/GrVulkanMemoryAllocator.h)
+endif()
 
 if(SKIA_BUILD_MODULE_SKSHAPER)
   list(APPEND skia_sources
@@ -1231,8 +1249,12 @@ target_include_directories(skia SYSTEM
                                src/utils/win
                                src/xml
                                third_party/gif
+                               third_party/icu
                                third_party/skcms
                           )
+if(SKIA_ENABLE_VULKAN)
+  target_include_directories(skia PRIVATE third_party/vulkanmemoryallocator)
+endif()
 target_include_directories(skia
                              PUBLIC
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/mylib>
