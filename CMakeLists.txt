@@ -1222,26 +1222,32 @@ if(UNIX AND NOT MINGW)
               src/ports/SkTLS_pthread.cpp
              )
   if(APPLE)
-    list(APPEND skia_sources
+    add_compile_definitions(SK_METAL)          
+    set(skia_objc_sources
                 src/gpu/mtl/GrMtlBuffer.mm
                 src/gpu/mtl/GrMtlCaps.mm
                 src/gpu/mtl/GrMtlCopyManager.mm
-                src/gpu/mtl/GrCopyPipelineState.mm
+                src/gpu/mtl/GrMtlCopyPipelineState.mm
                 src/gpu/mtl/GrMtlGpu.mm
                 src/gpu/mtl/GrMtlGpuCommandBuffer.mm
                 src/gpu/mtl/GrMtlPipelineState.mm
-                src/gpu/mtl/GrMtlPipelineDataManager.mm
+                src/gpu/mtl/GrMtlPipelineStateBuilder.mm
                 src/gpu/mtl/GrMtlPipelineStateDataManager.mm
                 src/gpu/mtl/GrMtlRenderTarget.mm
                 src/gpu/mtl/GrMtlResourceProvider.mm
                 src/gpu/mtl/GrMtlSampler.mm
                 src/gpu/mtl/GrMtlStencilAttachment.mm
                 src/gpu/mtl/GrMtlTexture.mm
-                src/gpu/mtl/GrMtlTexturedRenderTarget.mm
+                src/gpu/mtl/GrMtlTextureRenderTarget.mm
                 src/gpu/mtl/GrMtlTrampoline.mm
                 src/gpu/mtl/GrMtlUniformHandler.mm
                 src/gpu/mtl/GrMtlUtil.mm
                 src/gpu/mtl/GrMtlVaryingHandler.mm
+                )
+    foreach(skia_obj_source skia_objc_sources)
+      set_property(SOURCE ${skia_objc_source} APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc")
+    endforeach()
+    list(APPEND ${skia_objc_sources}
                 src/ports/SkFontHost_mac.cpp
                 src/ports/SkImageEncoder_CG.cpp
                 src/ports/SkImageGeneratorCG.cpp
