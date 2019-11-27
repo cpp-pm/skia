@@ -24,6 +24,15 @@
 
 cmake_minimum_required (VERSION 3.1)
 
+# Set relevant policies.
+if(POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)
+endif(POLICY CMP0074)
+
+if(POLICY CMP0083)
+  cmake_policy(SET CMP0083 NEW)
+endif(POLICY CMP0083)
+
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/HunterGate.cmake)
 
 HunterGate(
@@ -55,7 +64,7 @@ hunter_add_package(giflib)
 find_package(giflib CONFIG REQUIRED)
 
 hunter_add_package(Jpeg)
-find_package(Jpeg CONFIG REQUIRED)
+find_package(JPEG CONFIG REQUIRED)
 add_compile_definitions(SK_HAS_JPEG_LIBRARY)
 
 string(FIND "${HUNTER_Jpeg_VERSION}" "turbo" HUNTER_Jpeg_IS_TURBO)
