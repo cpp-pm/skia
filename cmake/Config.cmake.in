@@ -30,8 +30,9 @@ if(@SKIA_ENABLE_OPENCL@)
   find_package(OpenCL REQUIRED)
 endif()
 
+find_package(Vulkan-Headers CONFIG REQUIRED)
+
 if(@SKIA_ENABLE_VULKAN@)
-  find_package(Vulkan-Headers CONFIG REQUIRED)
   find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 endif()
 

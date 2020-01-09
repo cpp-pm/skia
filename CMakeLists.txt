@@ -97,10 +97,11 @@ if(SKIA_ENABLE_OPENCL)
   find_package(OpenCL REQUIRED)
 endif()
 
-if(SKIA_ENABLE_VULKAN)
-  hunter_add_package(Vulkan-Headers)
-  find_package(Vulkan-Headers CONFIG REQUIRED)
+# This is required even for non-Vulkan builds.
+hunter_add_package(Vulkan-Headers)
+find_package(Vulkan-Headers CONFIG REQUIRED)
 
+if(SKIA_ENABLE_VULKAN)
   hunter_add_package(VulkanMemoryAllocator)
   find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 endif()
@@ -1193,7 +1194,7 @@ if(SKIA_ENABLE_VULKAN)
                 src/gpu/vk/GrVkVertexBuffer.cpp
                 third_party/vulkanmemoryallocator/GrVulkanMemoryAllocator.cpp
                 )
-    list(APPEND OTHER_LIBRARIES VulkanMemoryAllocator::VulkanMemoryAllocator Vulkan::Headers)
+    list(APPEND OTHER_LIBRARIES VulkanMemoryAllocator::VulkanMemoryAllocator)
 endif()
 
 # OS specific files
@@ -1231,7 +1232,7 @@ if(UNIX AND NOT MINGW)
               src/ports/SkTLS_pthread.cpp
              )
   if(APPLE)
-    add_compile_definitions(SK_METAL)          
+    add_compile_definitions(SK_METAL)
     set(skia_objc_sources
                 src/gpu/mtl/GrMtlBuffer.mm
                 src/gpu/mtl/GrMtlCaps.mm
@@ -1369,7 +1370,7 @@ source_group(TREE ${CMAKE_CURRENT_LIST_DIR}
              FILES ${skia_sources} ${skia_headers})
 target_compile_definitions(skia PRIVATE SKIA_IMPLEMENTATION=1)
 target_compile_definitions(skia PUBLIC $<$<CONFIG:Debug>:SK_DEBUG>)
-target_link_libraries(skia PUBLIC skcms ${OTHER_LIBRARIES}
+target_link_libraries(skia PUBLIC skcms ${OTHER_LIBRARIES} Vulkan::Headers
                                   PNG::png EXPAT::expat ZLIB::zlib giflib::giflib JPEG::jpeg harfbuzz::harfbuzz
                                   $<$<NOT:$<PLATFORM_ID:Windows>>:-ldl>)
 
