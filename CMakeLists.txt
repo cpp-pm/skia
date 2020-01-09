@@ -1370,7 +1370,7 @@ source_group(TREE ${CMAKE_CURRENT_LIST_DIR}
              FILES ${skia_sources} ${skia_headers})
 target_compile_definitions(skia PRIVATE SKIA_IMPLEMENTATION=1)
 target_compile_definitions(skia PUBLIC $<$<CONFIG:Debug>:SK_DEBUG>)
-target_link_libraries(skia PUBLIC skcms ${OTHER_LIBRARIES} Vulkan::Headers
+target_link_libraries(skia PUBLIC ${OTHER_LIBRARIES} Vulkan::Headers
                                   PNG::png EXPAT::expat ZLIB::zlib giflib::giflib JPEG::jpeg harfbuzz::harfbuzz
                                   $<$<NOT:$<PLATFORM_ID:Windows>>:-ldl>)
 
