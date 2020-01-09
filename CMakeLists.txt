@@ -1530,7 +1530,16 @@ install(
 install(
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/skia"
+    PATTERN "${CMAKE_CURRENT_SOURCE_DIR}/include/android/" EXCLUDE
+    PATTERN "${CMAKE_CURRENT_SOURCE_DIR}/include/third_party/" EXCLUDE
 )
+
+if(ANDROID)
+  install(
+      DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/android/"
+      DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/skia/android"
+  )
+endif()
 
 if(SKIA_BUILD_MODULE_SKSHAPER)
 install(
