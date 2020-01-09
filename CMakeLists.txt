@@ -1423,8 +1423,6 @@ if(SKIA_ENABLE_VULKAN)
 endif()
 target_include_directories(skia
                              PUBLIC
-                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/mylib>
-                               $<INSTALL_INTERFACE:skia/mylib>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/atlastext>
                                $<INSTALL_INTERFACE:skia/atlastext>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/c>
@@ -1528,6 +1526,18 @@ install(
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 )
+
+install(
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/skia"
+)
+
+if(SKIA_BUILD_MODULE_SKSHAPER)
+install(
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/modules/skshaper/include
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/modules/skshaper
+)
+endif()
 
 install(
     FILES "${PROJECT_CONFIG}" "${VERSION_CONFIG}"
