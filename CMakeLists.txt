@@ -1528,14 +1528,14 @@ install(
 )
 
 install(
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/skia"
 )
 
 if(SKIA_BUILD_MODULE_SKSHAPER)
 install(
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/modules/skshaper/include"
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/modules/skshaper"
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/modules/skshaper/include/"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/skia/modules/skshaper"
 )
 endif()
 
