@@ -1369,7 +1369,7 @@ source_group(TREE ${CMAKE_CURRENT_LIST_DIR}
              FILES ${skia_sources} ${skia_headers})
 target_compile_definitions(skia PRIVATE SKIA_IMPLEMENTATION=1)
 target_compile_definitions(skia PUBLIC $<$<CONFIG:Debug>:SK_DEBUG>)
-target_link_libraries(skia PUBLIC ${OTHER_LIBRARIES}
+target_link_libraries(skia PUBLIC skcms ${OTHER_LIBRARIES}
                                   PNG::png EXPAT::expat ZLIB::zlib giflib::giflib JPEG::jpeg harfbuzz::harfbuzz
                                   $<$<NOT:$<PLATFORM_ID:Windows>>:-ldl>)
 
@@ -1459,6 +1459,8 @@ target_include_directories(skia
                                $<INSTALL_INTERFACE:include/skia/utils>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/utils/mac>
                                $<INSTALL_INTERFACE:include/skia/utils/mac>
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third_party/skcms>
+                               $<INSTALL_INTERFACE:include/skia/skcms>
                                )
 
 if(SKIA_BUILD_MODULE_SKSHAPER)
@@ -1532,6 +1534,11 @@ install(
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/skia"
     PATTERN "android/*" EXCLUDE
     PATTERN "third_party/*" EXCLUDE
+)
+
+install(
+    FILES "${CMAKE_CURRENT_SOURCE_DIR}/third_party/skcms/skcms.h"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/skia/skcms"
 )
 
 if(ANDROID)
