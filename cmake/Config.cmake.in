@@ -15,12 +15,25 @@
 if(UNIX AND NOT APPLE)
   find_package(freetype CONFIG REQUIRED)
 endif()
-
 find_package(PNG CONFIG REQUIRED)
 find_package(EXPAT CONFIG REQUIRED)
 find_package(ZLIB CONFIG REQUIRED)
 find_package(giflib CONFIG REQUIRED)
-find_package(libjpeg-turbo CONFIG REQUIRED)
+find_package(JPEG CONFIG REQUIRED)
+if(NOT TARGET JPEG::turbojpeg AND NOT TARGET JPEG::turbojpeg-static)
+  message(FATAL_ERROR "Skia requires libjpeg-turbo as Jpeg! Specify a turbo- version of Jpeg in your Hunter config.")
+endif()
+
+find_package(harfbuzz CONFIG REQUIRED)
+
+if(@SKIA_ENABLE_OPENCL@)
+  find_package(OpenCL REQUIRED)
+endif()
+
+if(@SKIA_ENABLE_VULKAN@)
+  find_package(Vulkan-Headers CONFIG REQUIRED)
+  find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+endif()
 
 find_package(Lua CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
