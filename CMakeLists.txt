@@ -1424,47 +1424,47 @@ endif()
 target_include_directories(skia
                              PUBLIC
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/atlastext>
-                               $<INSTALL_INTERFACE:skia/atlastext>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/atlastext>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/c>
-                               $<INSTALL_INTERFACE:skia/c>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/c>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/codec>
-                               $<INSTALL_INTERFACE:skia/codec>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/codec>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/config>
-                               $<INSTALL_INTERFACE:skia/config>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/config>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/core>
-                               $<INSTALL_INTERFACE:skia/core>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/core>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/docs>
-                               $<INSTALL_INTERFACE:skia/docs>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/docs>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/effects>
-                               $<INSTALL_INTERFACE:skia/effects>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/effects>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/encode>
-                               $<INSTALL_INTERFACE:skia/encode>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/encode>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/gpu>
-                               $<INSTALL_INTERFACE:skia/gpu>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/gpu>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/gpu/gl>
-                               $<INSTALL_INTERFACE:skia/gpu/gl>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/gpu/gl>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/gpu/mock>
-                               $<INSTALL_INTERFACE:skia/gpu/mock>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/gpu/mock>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/gpu/mtl>
-                               $<INSTALL_INTERFACE:skia/gpu/mtl>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/gpu/mtl>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/gpu/vk>
-                               $<INSTALL_INTERFACE:skia/gpu/vk>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/gpu/vk>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/pathops>
-                               $<INSTALL_INTERFACE:skia/pathops>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/pathops>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/ports>
-                               $<INSTALL_INTERFACE:skia/ports>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/ports>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/svg>
-                               $<INSTALL_INTERFACE:skia/svg>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/svg>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/utils>
-                               $<INSTALL_INTERFACE:skia/utils>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/utils>
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/utils/mac>
-                               $<INSTALL_INTERFACE:skia/utils/mac>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/utils/mac>
                                )
 
 if(SKIA_BUILD_MODULE_SKSHAPER)
 target_include_directories(skia PUBLIC
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/modules/skshaper/include>
-                               $<INSTALL_INTERFACE:skia/modules/skshaper>
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/skia/modules/skshaper>
 )
 endif()
 
@@ -1530,8 +1530,8 @@ install(
 install(
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/skia"
-    PATTERN "${CMAKE_CURRENT_SOURCE_DIR}/include/android/" EXCLUDE
-    PATTERN "${CMAKE_CURRENT_SOURCE_DIR}/include/third_party/" EXCLUDE
+    PATTERN "android/*" EXCLUDE
+    PATTERN "third_party/*" EXCLUDE
 )
 
 if(ANDROID)
@@ -1558,4 +1558,3 @@ install(
     NAMESPACE "${NAMESPACE}"
     DESTINATION "${CONFIG_INSTALL_DIR}"
 )
-
