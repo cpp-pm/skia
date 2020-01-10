@@ -1087,7 +1087,7 @@ if(TARGET WebP::webp)
               src/images/SkWebpEncoder.cpp
               )
   add_compile_definitions(SK_HAS_WEBP_LIBRARY)
-  list(APPEND OTHER_LIBRARIES WebP::webp)
+  list(APPEND OTHER_LIBRARIES WebP::webpdemux WebP::libwebpmux)
 endif()
 if(SKIA_ENABLE_ATLAS_TEXT)
   list(APPEND skia_sources
@@ -1339,6 +1339,12 @@ file(GLOB_RECURSE skia_headers
                   src/*.h
                   include/*.h)
 list(FILTER skia_headers EXCLUDE REGEX "include/third_party/.*$")
+
+list(APPEND skia_headers
+    third_party/skcms/skcms.h
+    third_party/skcms/skcms_internal.h
+    third_party/skcms/src/Transform_inl.h
+)
 
 if(SKIA_ENABLE_VULKAN)
   list(APPEND skia_headers
